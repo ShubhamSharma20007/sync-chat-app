@@ -83,10 +83,28 @@ export const getUsersChannel = async (req, res) => {
 
 // get channel messages
 export const getChannelMessages = async (req, res) => {
-    try {
-        let personId = req.body.userId;
-        let objectUserId = new mongoose.Types.ObjectId(personId);
-    } catch (error) {
-        
+   try {
+    const { channelId } = req.params;
+    const messages = await ChannelModel.findById(channelId).populate({
+        path:"messages",
+        populate:{
+            path:'sender',
+            select:'_id email firstName lastName image color'
+        }
+    })
+
+    if(!messages){
+        return res.status(404).json({
+            success:false,
+            message:"Channel not found"
+        })
     }
+    return res.status(201).json({
+        success: true,
+        message: "messages found",
+        messages
+    })
+   } catch (error) {
+    
+   }
 }

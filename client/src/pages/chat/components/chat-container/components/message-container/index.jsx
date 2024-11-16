@@ -4,6 +4,7 @@ import moment from "moment";
 import apiClient from "../../../../../../../lib/api-client";
 import { GET_MESSAGES } from "../../../../../../../utils/constant";
 import { HOST } from "../../../../../../../utils/constant";
+import { colors } from "../../../../../../../utils/colorpalatte";
 import {
   addMessage,
   selectedChatMessages,
@@ -13,7 +14,8 @@ import {
 import { MdFolderZip } from "react-icons/md";
 import { IoCloseCircleOutline } from "react-icons/io5";
 import { MdOutlineDownloadForOffline } from "react-icons/md";
-
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { GET_CHANNEL_MESSAGES } from "../../../../../../../utils/constant";
 const MessageContainer = () => {
   const scrollRef = useRef(null);
   const dispatch = useDispatch();
@@ -35,7 +37,7 @@ const MessageContainer = () => {
         }
       );
       const response = await request.data;
-      console.log(response, 12);
+     
       if (response.success) {
         const { messages } = response;
         dispatch(selectedChatMessages(messages));
@@ -50,8 +52,33 @@ const MessageContainer = () => {
     return imageRegex.test(filePath);
   };
 
+
+  const getChannelMessages = async () => {
+    try {
+      const request = await apiClient.get(
+        `${GET_CHANNEL_MESSAGES}/${chatReducer.selectedChatData._id}`,
+        {
+          withCredentials: true,
+        }
+      );
+      const response = await request.data;
+      if (response.success) {
+        const { messages } = response;
+        console.log(messages,1111)
+        dispatch(selectedChatMessages(messages));
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    getMessages();
+    if(chatReducer.selectedChatType === "contact"){
+      getMessages();
+    }
+    else{
+      getChannelMessages()
+    }
   }, [getUser, chatReducer.selectedChatData, chatReducer.selectedChatType]);
 
   useEffect(() => {
@@ -70,11 +97,14 @@ const MessageContainer = () => {
       if (permission === "granted") {
         const request = await apiClient.get(`${HOST}/download-image/${file}`, {
           responseType: "blob",
-          onDownloadProgress:data=>{
-            dispatch(setFileDownloadProcess(Math.round(100 * data.loaded / data.total)))
-          }
+          onDownloadProgress: (data) => {
+            dispatch(
+              setFileDownloadProcess(
+                Math.round((100 * data.loaded) / data.total)
+              )
+            );
+          },
         });
-        console.log(request);
         const response = await request.data;
         const url = URL.createObjectURL(response);
         const a = document.createElement("a");
@@ -94,9 +124,6 @@ const MessageContainer = () => {
     });
   };
 
-
-
-
   const renderDMMessages = (message) => {
     return (
       <div
@@ -105,7 +132,6 @@ const MessageContainer = () => {
             ? "text-left"
             : "text-right"
         }`}
-   
       >
         {message.messageType === "text" && (
           <div
@@ -141,7 +167,106 @@ const MessageContainer = () => {
                   }`}
                 />
               </div>
-            
+            ) : (
+              <div
+                className="flex justify-center items-center cursor-pointer space-x-3"
+                onClick={() => handleDownloadFile(message.fileUrl)}
+              >
+                <span className="text-white/80 text-3xl  bg-black/20 rounded-full p-3">
+                  <MdFolderZip className="text-3xl" />
+                </span>
+                <span className="text-sm">
+                  {message.fileUrl.split("-").pop()}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderChannelMessage = (message) => {
+    return (
+      <div
+        className={`$ mt-5 ${
+          message.sender._id !== getUser._id ? "text-left" : "text-right"
+        }`}
+      >
+        {message.messageType === "text" && (
+          <div
+            className={`${
+              message.sender !== chatReducer.selectedChatData._id
+                ? "bg-[#8417ff]/5 text-[#8417ff]/90 border-[#8417ff]/50"
+                : "bg-[#2a2b33]/5 text-white/50 border-[#ffff]/20 "
+            } border inline-block p-4 rounded my-1 max-w-[50%] break-words`}
+          >
+            {message.content}
+          </div>
+        )}
+        {message.sender !== getUser._id ? (
+          <div className={`flex  items-center gap-3 ${ message.sender === chatReducer.selectedChatData._id ? "justify-start" :'justify-start'}`}>
+            <Avatar
+              className=" uppercase flex justify-center items-center  border-[1px] text-lg h-8 w-8  rounded-full overflow-hidden"
+              style={{
+                backgroundColor:
+                  !message.sender.image && colors[message.sender.color]?.bg,
+              }}
+            >
+              {/* <AvatarFallback>CN</AvatarFallback> */}
+              {message.sender.image ? (
+                <AvatarImage
+                  src={`${import.meta.env.VITE_BACKEND_URL}/uploads/profiles/${
+                    message.sender?.image
+                  }`}
+                  className="object-cover"
+                />
+              ) : (
+                <AvatarFallback
+                  className="uppercase h-8 w-8 text-lg flex items-center justify-center rounded-full"
+                  style={{
+                    color: "white",
+                  }}
+                >
+                  {message.sender.firstName
+                    ? message.sender.firstName.split("").shift()
+                    : message.sender.email.split("").shift()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div className="text-sm text-white/60">{`${message.sender.firstName} ${message.sender.lastName}`}</div>
+           
+          </div>
+        ) : (
+          // <span className="text-xs text-white/60">
+          //   {moment(message.createdAt).format("LT")}
+          // </span>
+          ""
+        )}
+
+{message.messageType === "file" && (
+          <div
+            className={`${
+              message.sender === getUser._id
+                ? "bg-[#8417ff]/5 text-[#8417ff]/90 border-[#8417ff]/50"
+                : "bg-[#2a2b33]/5 text-white/50 border-[#ffff]/20 "
+            } border inline-block p-4 rounded my-1 max-w-[50%] break-words`}
+          >
+            {checkIfImage(message.fileUrl) ? (
+              <div
+                className="cursor-pointer"
+                onClick={() => {
+                  setImgaeUrl(message.fileUrl);
+                  setShowImage(true);
+                }}
+              >
+                <img
+                  className="h-[200px] w-[200px]"
+                  src={`${import.meta.env.VITE_BACKEND_URL}/uploads/files/${
+                    message.fileUrl
+                  }`}
+                />
+              </div>
             ) : (
               <div
                 className="flex justify-center items-center cursor-pointer space-x-3"
@@ -162,30 +287,11 @@ const MessageContainer = () => {
   };
 
 
-  const renderChannelMessage = (message) => {
-  //  return console.log({message})
-    return(
-      <div className={`$ mt-5 ${message.sender._id !== undefined ? 'text-left' :'text-right'}`}>
-        {message.messageType === "text" && (
-          <div
-            className={`${
-              message.sender !== chatReducer.selectedChatData._id
-                ? "bg-[#8417ff]/5 text-[#8417ff]/90 border-[#8417ff]/50"
-                : "bg-[#2a2b33]/5 text-white/50 border-[#ffff]/20 "
-            } border inline-block p-4 rounded my-1 max-w-[50%] break-words`}
-          >
-            {message.content}
-          </div>
-        )}
-      </div>
-    )
-  };
 
 
   const renderMessage = () => {
-
     let lastDate = null;
-    return chatReducer.selectedChatMessages.map((msg, index) => {
+    return chatReducer.selectedChatMessages.length > 0 &&  chatReducer.selectedChatMessages.map((msg, index) => {
       const messageDate = moment(msg.createdAt).format("YYYY-MM-DD");
       const showDate = messageDate != lastDate;
       lastDate = messageDate;
@@ -197,10 +303,11 @@ const MessageContainer = () => {
             </div>
           )}
           {chatReducer.selectedChatType === "contact" && renderDMMessages(msg)}
-          {chatReducer.selectedChatType === "channel" && renderChannelMessage(msg)}
+          {chatReducer.selectedChatType === "channel" &&
+            renderChannelMessage(msg)}
           <div
             className={`${
-              msg.sender === getUser._id ? "text-right" : "text-left"
+              msg.sender._id === getUser._id ? "text-right" : "text-left"
             } text-gray-600 text-xs`}
           >
             {moment(msg.createdAt).format("LT")}
