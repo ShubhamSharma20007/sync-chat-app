@@ -37,9 +37,10 @@ const MessageContainer = () => {
         }
       );
       const response = await request.data;
-     
+
       if (response.success) {
         const { messages } = response;
+
         dispatch(selectedChatMessages(messages));
       }
     } catch (error) {
@@ -52,7 +53,6 @@ const MessageContainer = () => {
     return imageRegex.test(filePath);
   };
 
-
   const getChannelMessages = async () => {
     try {
       const request = await apiClient.get(
@@ -64,8 +64,8 @@ const MessageContainer = () => {
       const response = await request.data;
       if (response.success) {
         const { messages } = response;
-        console.log(messages,1111)
-        dispatch(selectedChatMessages(messages));
+        console.log(messages);
+        dispatch(selectedChatMessages(messages.messages));
       }
     } catch (error) {
       console.log(error);
@@ -73,11 +73,10 @@ const MessageContainer = () => {
   };
 
   useEffect(() => {
-    if(chatReducer.selectedChatType === "contact"){
+    if (chatReducer.selectedChatType === "contact") {
       getMessages();
-    }
-    else{
-      getChannelMessages()
+    } else {
+      getChannelMessages();
     }
   }, [getUser, chatReducer.selectedChatData, chatReducer.selectedChatType]);
 
@@ -185,11 +184,10 @@ const MessageContainer = () => {
       </div>
     );
   };
-
   const renderChannelMessage = (message) => {
     return (
       <div
-        className={`$ mt-5 ${
+        className={`$ my-1 ${
           message.sender._id !== getUser._id ? "text-left" : "text-right"
         }`}
       >
@@ -204,47 +202,96 @@ const MessageContainer = () => {
             {message.content}
           </div>
         )}
-        {message.sender !== getUser._id ? (
-          <div className={`flex  items-center gap-3 ${ message.sender === chatReducer.selectedChatData._id ? "justify-start" :'justify-start'}`}>
-            <Avatar
-              className=" uppercase flex justify-center items-center  border-[1px] text-lg h-8 w-8  rounded-full overflow-hidden"
-              style={{
-                backgroundColor:
-                  !message.sender.image && colors[message.sender.color]?.bg,
-              }}
-            >
-              {/* <AvatarFallback>CN</AvatarFallback> */}
-              {message.sender.image ? (
-                <AvatarImage
-                  src={`${import.meta.env.VITE_BACKEND_URL}/uploads/profiles/${
-                    message.sender?.image
-                  }`}
-                  className="object-cover"
-                />
-              ) : (
-                <AvatarFallback
-                  className="uppercase h-8 w-8 text-lg flex items-center justify-center rounded-full"
-                  style={{
-                    color: "white",
-                  }}
-                >
-                  {message.sender.firstName
-                    ? message.sender.firstName.split("").shift()
-                    : message.sender.email.split("").shift()}
-                </AvatarFallback>
-              )}
-            </Avatar>
-            <div className="text-sm text-white/60">{`${message.sender.firstName} ${message.sender.lastName}`}</div>
-           
-          </div>
-        ) : (
-          // <span className="text-xs text-white/60">
-          //   {moment(message.createdAt).format("LT")}
-          // </span>
-          ""
-        )}
+        {
+          message.sender._id !== getUser._id ? (
+            <div className={`flex gap-2 justify-start items-center mt-2 mb-4`}>
+              <Avatar
+                className=" uppercase flex justify-center object-cover object-center items-center  border-[1px] text-lg h-7 w-7  rounded-full overflow-hidden"
+                style={{
+                  backgroundColor:
+                    !message.sender.image && colors[message.sender.color]?.bg,
+                }}
+              >
+                {/* <AvatarFallback>CN</AvatarFallback> */}
+                {message.sender.image ? (
+                  <AvatarImage
+                    src={`${
+                      import.meta.env.VITE_BACKEND_URL
+                    }/uploads/profiles/${message.sender?.image}`}
+                    className="object-cover"
+                  />
+                ) : (
+                  <AvatarFallback
+                    className="uppercase h-8 w-8 text-lg flex items-center justify-center rounded-full"
+                    style={{
+                      color: "white",
+                      backgroundColor:
+                        !message.sender.image &&
+                        colors[message.sender.color]?.bg,
+                    }}
+                  >
+                    {message.sender.firstName
+                      ? message.sender.firstName.split("").shift()
+                      : message.sender.email.split("").shift()}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <div className="text-sm text-white/60">{`${message.sender.firstName} ${message.sender.lastName}`}</div>
+            </div>
+          ) : null
+          // (
+          //   <div className={`flex  items-center gap-3 justify-end`}>
+          //   <Avatar
 
-{message.messageType === "file" && (
+          //   >
+          //     {/* <AvatarFallback>CN</AvatarFallback> */}
+          //     {message.sender.image ? (
+          //      <>
+          //       <AvatarImage
+          //         src={`${import.meta.env.VITE_BACKEND_URL}/uploads/profiles/${
+          //           message.sender?.image
+          //         }`}
+          //         className="object-cover"
+          //       />
+          //       <AvatarFallback
+          //       className="uppercase h-8 w-8 text-lg flex items-center justify-center rounded-full"
+          //       style={{
+          //         color: "white",
+          //       }}
+          //     >
+          //       {message.sender.firstName
+          //         ? message.sender.firstName.split("").shift()
+          //         : message.sender.email.split("").shift()}
+          //     </AvatarFallback>
+          //      </>
+          //     ) : (
+          //      <>
+          //       <AvatarImage
+          //       src={`${import.meta.env.VITE_BACKEND_URL}/uploads/profiles/${
+          //         message.sender?.image
+          //       }`}
+          //       className="object-cover"
+          //     />
+          //       <AvatarFallback
+          //         className="uppercase h-8 w-8 text-lg flex items-center justify-center rounded-full"
+          //         style={{
+          //           color: "white",
+          //         }}
+          //       >
+          //         {message.sender.firstName
+          //           ? message.sender.firstName.split("").shift()
+          //           : message.sender.email.split("").shift()}
+          //       </AvatarFallback>
+          //      </>
+          //     )}
+          //   </Avatar>
+          //   <div className="text-sm text-white/60">{`${message.sender.firstName} ${message.sender.lastName}`}</div>
+
+          // </div>
+          // )
+        }
+
+        {message.messageType === "file" && (
           <div
             className={`${
               message.sender === getUser._id
@@ -286,35 +333,47 @@ const MessageContainer = () => {
     );
   };
 
-
-
-
   const renderMessage = () => {
     let lastDate = null;
-    return chatReducer.selectedChatMessages.length > 0 &&  chatReducer.selectedChatMessages.map((msg, index) => {
-      const messageDate = moment(msg.createdAt).format("YYYY-MM-DD");
-      const showDate = messageDate != lastDate;
-      lastDate = messageDate;
-      return (
-        <div key={index}>
-          {showDate && (
-            <div className="text-center text-gray-500 my-2">
-              {moment(msg.createdAt).format("LL")}
-            </div>
-          )}
-          {chatReducer.selectedChatType === "contact" && renderDMMessages(msg)}
-          {chatReducer.selectedChatType === "channel" &&
-            renderChannelMessage(msg)}
-          <div
-            className={`${
-              msg.sender._id === getUser._id ? "text-right" : "text-left"
-            } text-gray-600 text-xs`}
-          >
-            {moment(msg.createdAt).format("LT")}
+
+    return (
+      chatReducer.selectedChatMessages.length > 0 &&
+      chatReducer.selectedChatMessages.map((msg, index) => {
+        const messageDate = moment(msg.createdAt).format("YYYY-MM-DD");
+        const showDate = messageDate != lastDate;
+        lastDate = messageDate;
+        return (
+          <div key={index}>
+            {showDate && (
+              <div className="text-center text-gray-500 my-2">
+                {moment(msg.createdAt).format("LL")}
+              </div>
+            )}
+            {chatReducer.selectedChatType === "contact" &&
+              renderDMMessages(msg)}
+            {chatReducer.selectedChatType === "channel" &&
+              renderChannelMessage(msg)}
+            {chatReducer.selectedChatType === "contact" ? (
+              <div
+                className={`${
+                  msg.sender === getUser._id ? "text-right" : "text-left"
+                } text-gray-600 text-xs`}
+              >
+                {moment(msg.createdAt).format("LT")}
+              </div>
+            ) : (
+              <div
+                className={`${
+                  msg.sender._id === getUser._id ? "text-right" : "text-left"
+                } text-gray-600 text-xs`}
+              >
+                {moment(msg.createdAt).format("LT")}
+              </div>
+            )}
           </div>
-        </div>
-      );
-    });
+        );
+      })
+    );
   };
 
   return (

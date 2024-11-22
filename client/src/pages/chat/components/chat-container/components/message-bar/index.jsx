@@ -70,6 +70,13 @@ const MessageBar = () => {
     }
   };
 
+
+
+
+
+ 
+
+
   
   const handleChatfile =()=>{
     fileRef.current.click();
